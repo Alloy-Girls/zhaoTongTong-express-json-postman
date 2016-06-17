@@ -20,6 +20,7 @@ function getAllProducts(callback) {
         if(isNotEmpty(data)) {
             var jsonData = JSON.parse(data);
             callback(200, jsonData);
+            return;
         }
 
         callback(404, 'fail to read allProducts');
