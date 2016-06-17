@@ -1,62 +1,47 @@
 var express = require('express');
+var models = require('./common');
+var file = require('../app');
 var router = express.Router();
 var fs = require('fs');
 var bodyParser = require('body-parser');
 
 router.use(bodyParser.json());
-
 router.put('/:id', function(req, res) {
-
     var input = req.body;
     var url = req.params;
     var urlId = parseInt(url.id);
 
-    updateProduct(input, urlId, function(err) {
-        if(err) {
-            res.status(404).send(err);
-        }
+    updateProduct(input, urlId, function(httpCode, data) {
+        res.status(httpCode).send(data);
+        return;
     });
 });
 
 function updateProduct(input, urlId, callback) {
-    if(isExist(urlId)) {
-        fs.readFile('./data.json', 'utf-8', function(err, data) {
+    if(models.isExist(urlId)) {
+        fs.readFile(file.name, 'utf-8', function(err, data) {
             if(err) {
-                callback(err);
+                callback(404, err);
             }
 
-            var jsonData = newProduct(urlId, input);
-            fs.writeFile('./data.json', JSON.stringify(jsonData), function(fd){});
+            var jsonData = getNewProduct(urlId, input);
+            fs.writeFile(file.name, JSON.stringify(jsonData), function(fd){});
 
-            callback('200');
+            callback(200, 'updata succedd');
 
         });
-    }
-}
-
-function syncReadFile() {
-    var data = fs.readFileSync('./data.json', 'utf-8');
-    var jsonData = JSON.parse(data);
-
-    return jsonData;
-}
-
-function isRightType(input) {
-    if(typeof (input.barcode) === 'string' &&
-        typeof (input.name) === 'string' &&
-        typeof (input.unit) === 'string' &&
-        typeof (input.price) === 'number') {
-
-        return true;
+        return;
     }
 
-    return false;
+    callback(404, err);
 }
 
-function newProduct(urlId, input) {
+function getNewProduct(urlId, input) {
 
-    if(isRightType(input)) {
-        var jsonData = syncReadFile();
+    if(models.type(input)) {
+
+        var data = fs.readFileSync(file.name, 'utf-8');
+        var jsonData = JSON.parse(data);
 
         for(var i = 0; i < jsonData.length; i++){
             if(jsonData[i].id === urlId) {
@@ -69,21 +54,6 @@ function newProduct(urlId, input) {
 
         return jsonData;
     }
-    return;
-
-}
-
-function isExist(urlId) {
-
-    var jsonData = syncReadFile();
-
-    for(var i = 0; i < jsonData.length; i++) {
-        if(jsonData[i].id === urlId) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 module.exports = router;

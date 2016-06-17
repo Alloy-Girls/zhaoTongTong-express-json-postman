@@ -1,26 +1,25 @@
 var express = require('express');
+var models = require('./common');
+var file = require('../app');
 var fs = require('fs');
 var bodyParser = require('body-parser');
 var router = express.Router();
+const maxIdFileName = './maxId.json';
 
 router.use(bodyParser.json());
-
 router.post('/', function(req, res) {
-
     var input = req.body;
 
-    addProduct(input, function(err){
-        if(err) {
-            res.status(404).send(err);
+    addProduct(input, function(httpCode, data){
+            res.status(httpCode).send(data);
             return;
-        }
     });
 });
 
 function addProduct(input, callback) {
-    fs.readFile('./data.json', 'utf-8', function (err, data) {
+    fs.readFile(file.name, 'utf-8', function (err, data) {
         if(err) {
-            callback(err);
+            callback(404, err);
         }
         if(data) {
             var jsonData = JSON.parse(data);
@@ -28,32 +27,34 @@ function addProduct(input, callback) {
             var jsonData = [];
         }
 
-        if(isRightType(input)) {
+        if(models.type(input)) {
             var newInput = addId(input);
             jsonData.push(newInput);
-        }else {
+
+            fs.writeFile(file.name, JSON.stringify(jsonData), function(err, fd) {
+                if(err) {
+                    callback(404, err);
+                }
+
+                callback(200, 'add succedd');
+            });
+
             return;
         }
 
-        fs.writeFile('./data.json', JSON.stringify(jsonData), function(err, fd) {
-            if(err) {
-                callback(err);
-            }
-
-            callback('200');
-        });
+        callback(404, "wrong");
 
     });
 }
 
 function getMaxId() {
-    var result = fs.existsSync('./maxId.json');
+    var result = fs.existsSync(maxIdFileName);
         if(result) {
-            var data = fs.readFileSync('./maxId.json', 'utf-8');
+            var data = fs.readFileSync(maxIdFileName, 'utf-8');
             var maxId = JSON.parse(data);
         }else {
             var maxId = {"maxId": 0};
-            fs.writeFileSync('./maxId.json', JSON.stringify(maxId));
+            fs.writeFileSync(maxIdFileName, JSON.stringify(maxId));
         }
 
         return maxId.maxId;
@@ -62,6 +63,7 @@ function getMaxId() {
 function addId(input) {
     var newInput = {};
     var maxId = getMaxId();
+
     maxId += 1;
 
     newInput.id = maxId;
@@ -70,21 +72,9 @@ function addId(input) {
     newInput.unit = input.unit;
     newInput.price = input.price;
 
-    fs.writeFileSync('./maxId.json', JSON.stringify({"maxId": maxId}));
+    fs.writeFileSync(maxIdFileName, JSON.stringify({"maxId": maxId}));
 
     return newInput;
-}
-
-function isRightType(input) {
-    if(typeof (input.barcode) === 'string' &&
-        typeof (input.name) === 'string' &&
-        typeof (input.unit) === 'string' &&
-        typeof (input.price) === 'number') {
-
-        return true;
-    }
-
-    return false;
 }
 
 module.exports = router;

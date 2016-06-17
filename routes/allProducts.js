@@ -1,19 +1,41 @@
 var express = require('express');
+var file = require('../app');
 var router = express.Router();
 var fs = require('fs');
 
 router.get('/', function(req, res) {
-    fs.readFile('./data.json', function(err, data) {
-        if(err) {
-            res.status(404).send(err);
-            return;
-        }
+    getAllProducts(function (httpCode, data) {
 
-        var jsonObj = JSON.parse(data);
-
-        res.status(404).json(jsonObj);
-
+        res.status(httpCode).send(data);
+        return;
     });
 });
+
+function getAllProducts(callback) {
+    fs.readFile(file.name, function(err, data) {
+        if(err) {
+            callback(404, err);
+        }
+
+        if(isNotEmpty(data)) {
+            var jsonData = JSON.parse(data);
+            callback(200, jsonData);
+        }
+
+        callback(404, 'fail to read allProducts');
+    });
+}
+
+function isNotEmpty() {
+
+    var data = fs.readFileSync(file.name, 'utf-8');
+    var jsonData = JSON.parse(data);
+
+    if(jsonData.length === 0) {
+        return false;
+    }
+
+    return true;
+}
 
 module.exports = router;

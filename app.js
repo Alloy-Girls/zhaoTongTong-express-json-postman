@@ -1,5 +1,6 @@
 var express = require('express');
 var app = express();
+const FILENAME = './data.json';
 
 app.listen(3000);
 
@@ -15,6 +16,7 @@ app.use('/addProduct', addProduct);
 app.use('/removeProduct', removeProduct);
 app.use('/updateProduct', updateProduct);
 
+exports.name = FILENAME;
 module.exports = app;
 
 
