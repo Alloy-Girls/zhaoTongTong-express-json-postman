@@ -10,8 +10,8 @@ var addProduct = require('./routes/addProduct');
 var removeProduct = require('./routes/removeProduct');
 var updateProduct = require('./routes/updateProduct');
 
-app.use('/allProducts', allProducts);
-app.use('/oneProduct', oneProduct);
+app.use('/getAllProducts', allProducts);
+app.use('/getOneProduct', oneProduct);
 app.use('/addProduct', addProduct);
 app.use('/removeProduct', removeProduct);
 app.use('/updateProduct', updateProduct);
